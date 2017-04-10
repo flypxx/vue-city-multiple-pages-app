@@ -2,15 +2,25 @@ var path = require('path')
 var utils = require('./utils')
 var config = require('../config')
 var vueLoaderConfig = require('./vue-loader.conf')
+var glob = require('glob')
+var CommonsChunkPlugin = require('webpack/lib/optimize/CommonsChunkPlugin')
+
+var entries = {}
+var chunks = []
 
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
 
+glob.sync('./src/pages/**/*.js').forEach(filepath => {
+  console.log('entries ' + filepath)
+  const chunk = filepath.split('./src/pages/')[1].split('.js')[0]
+  entries[chunk] = filepath
+  chunks.push(chunk)
+})
+
 module.exports = {
-  entry: {
-    app: './src/main.js'
-  },
+  entry: entries,
   output: {
     path: config.build.assetsRoot,
     filename: '[name].js',
@@ -63,5 +73,13 @@ module.exports = {
         }
       }
     ]
-  }
+  },
+  plugins: [
+    new CommonsChunkPlugin({
+      name: 'vendors',
+      filename: 'assets/js/vendors.js',
+      chunks: chunks,
+      minChunks: chunks.length
+    })
+  ]
 }
